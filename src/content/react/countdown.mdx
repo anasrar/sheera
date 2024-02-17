@@ -1,0 +1,128 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "Countdown"
+description: "Start, pause, get value countdown."
+date: 2024-01-19
+---
+
+import { Countdown } from "@examples/Countdown";
+
+## Example
+
+<Countdown client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/Countdown.tsx">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { useState } from "react";
+
+export function useCountdown() {
+	const [finish, setFinish] = useState(true);
+	const [time, setTime] = useState(0);
+	const [paused, setPaused] = useState(false);
+
+	const [intervalId, setIntervalId] = useState(0);
+
+	const start = (seconds: number) => {
+		setFinish(false);
+		setTime(seconds);
+		setPaused(false);
+		setIntervalId(
+			setInterval(() => {
+				setTime((currentTime) => {
+					const result = currentTime - 1;
+					if (result === 0) {
+						setFinish(true);
+						setPaused(false);
+						clearInterval(intervalId);
+					}
+
+					return result;
+				});
+			}, 1000),
+		);
+	};
+
+	const pause = () => {
+		setPaused(true);
+		clearInterval(intervalId);
+	};
+
+	const resume = () => {
+		start(time);
+	};
+
+	const stop = () => {
+		setFinish(true);
+		setTime(0);
+		setPaused(false);
+		clearInterval(intervalId);
+	};
+
+	return {
+		finish,
+		paused,
+		time,
+		start,
+		pause,
+		resume,
+		stop,
+	};
+}
+```
+
+## Usage
+
+```tsx
+import { useCountdown } from "@hooks/ReactCountdown";
+
+export function Countdown() {
+	const { finish, paused, time, start, pause, resume, stop } = useCountdown();
+
+	return (
+		<div>
+			<div>
+				<button disabled={!finish} onClick={() => start(90)}>
+					Resend Code{" "}
+					{!finish
+						? `(${new Date(time * 1000).toLocaleString("en-US", { minute: "2-digit", second: "2-digit" })})`
+						: null}
+				</button>
+			</div>
+			<div>
+				<button
+					disabled={finish || paused}
+					onClick={() => {
+						pause();
+					}}
+				>
+					Pause
+				</button>
+				<button
+					disabled={finish || !paused}
+					onClick={() => {
+						resume();
+					}}
+				>
+					Resume
+				</button>
+				<button
+					disabled={finish}
+					onClick={() => {
+						stop();
+					}}
+				>
+					Stop
+				</button>
+			</div>
+		</div>
+	);
+}
+```

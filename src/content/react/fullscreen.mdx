@@ -1,0 +1,86 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "Fullscreen"
+description: "Enter or exit fullscreen on specific element."
+date: 2024-01-18
+---
+
+import { Fullscreen } from "@examples/Fullscreen";
+
+## Example
+
+<Fullscreen client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/Fullscreen.tsx">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { useEffect, useRef, useState } from "react";
+
+export function useFullscreen<TElement extends HTMLElement>() {
+	const refTargetElement = useRef<TElement>(null);
+	const [fullscreen, setFullscreen] = useState(false);
+
+	useEffect(() => {
+		const fullscreenchanged = () => {
+			const element = refTargetElement.current ?? document.body;
+
+			setFullscreen(document.fullscreenElement === element);
+		};
+
+		document.addEventListener("fullscreenchange", fullscreenchanged);
+
+		return () => {
+			document.removeEventListener("fullscreenchange", fullscreenchanged);
+		};
+	}, []);
+
+	const enterFullscreen = async (options?: FullscreenOptions) => {
+		return await (
+			refTargetElement.current ?? document.body
+		).requestFullscreen(options);
+	};
+
+	const exitFullscreen = async () => {
+		return await document.exitFullscreen();
+	};
+
+	return {
+		refTargetElement,
+		fullscreen,
+		enterFullscreen,
+		exitFullscreen,
+	};
+}
+```
+
+## Usage
+
+```tsx
+import { useFullscreen } from "@hooks/ReactFullscreen";
+
+export function Fullscreen() {
+	const { refTargetElement, fullscreen, enterFullscreen, exitFullscreen } =
+		useFullscreen<HTMLDivElement>();
+
+	return (
+		<div>
+			<div ref={refTargetElement}>
+				<button
+					onClick={() => {
+						fullscreen ? exitFullscreen() : enterFullscreen();
+					}}
+				>
+					{fullscreen ? <>Exit Fullscreen</> : <>Enter Fullscreen</>}
+				</button>
+			</div>
+		</div>
+	);
+}
+```

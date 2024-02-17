@@ -1,0 +1,238 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "MediaControl"
+description: "Play, pause, change volume, et cetera for video or audio element."
+date: 2024-01-20
+---
+
+import { MediaControl } from "@examples/MediaControl";
+
+## Example
+
+<MediaControl client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/MediaControl.svelte">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { onMount } from "svelte";
+import type { Action } from "svelte/action";
+import { get, writable } from "svelte/store";
+
+export function createMediaControl<TElement extends HTMLMediaElement>() {
+	let targetElement: TElement | null = null;
+	const metadata = writable(false);
+	const paused = writable(true);
+	const muted = writable(false);
+	const wait = writable(false);
+	const pitch = writable(true);
+
+	const duration = writable(0);
+	const time = writable(0);
+	const progress = writable(0);
+	const volume = writable(100);
+	const speed = writable(1);
+	const buffers = writable<[number, number][]>([]);
+
+	onMount(() => {
+		const onLoadedMetadata = () => {
+			metadata.set(true);
+			onTimeUpdate();
+		};
+		const onDurationChange = () => {
+			duration.set(targetElement!.duration);
+		};
+		onDurationChange();
+		const onTimeUpdate = () => {
+			const target = targetElement!;
+			const { currentTime, duration } = target;
+			time.set(currentTime);
+			onDurationChange();
+			progress.set((currentTime / duration) * 100);
+		};
+		const onPlay = () => {
+			paused.set(false);
+			wait.set(false);
+		};
+		const onPause = () => {
+			paused.set(true);
+		};
+		const onVolumeChange = () => {
+			muted.set(targetElement?.muted ?? true);
+			volume.set((targetElement?.volume ?? 1) * 100);
+		};
+		onVolumeChange();
+		const onWaiting = () => {
+			wait.set(true);
+		};
+		const onRateChange = () => {
+			speed.set(targetElement?.playbackRate ?? 1);
+		};
+		onRateChange();
+		const onProgress = () => {
+			const bufferTotal = targetElement?.buffered.length ?? 0;
+			const d = targetElement?.duration ?? 0;
+			const result: [number, number][] = [];
+
+			for (let i = 0; i < bufferTotal; i++) {
+				result.push([
+					(targetElement!.buffered.start(i) / d) * 100,
+					(targetElement!.buffered.end(i) / d) * 100,
+				]);
+			}
+
+			buffers.set(result);
+		};
+
+		targetElement?.addEventListener("loadedmetadata", onLoadedMetadata);
+		targetElement?.addEventListener("durationchange", onDurationChange);
+		targetElement?.addEventListener("timeupdate", onTimeUpdate);
+		targetElement?.addEventListener("play", onPlay);
+		targetElement?.addEventListener("playing", onPlay);
+		targetElement?.addEventListener("pause", onPause);
+		targetElement?.addEventListener("volumechange", onVolumeChange);
+		targetElement?.addEventListener("waiting", onWaiting);
+		targetElement?.addEventListener("ratechange", onRateChange);
+		targetElement?.addEventListener("progress", onProgress);
+
+		return () => {
+			targetElement?.removeEventListener(
+				"loadedmetadata",
+				onLoadedMetadata,
+			);
+			targetElement?.removeEventListener(
+				"durationchange",
+				onDurationChange,
+			);
+			targetElement?.removeEventListener("timeupdate", onTimeUpdate);
+			targetElement?.removeEventListener("play", onPlay);
+			targetElement?.removeEventListener("playing", onPlay);
+			targetElement?.removeEventListener("pause", onPause);
+			targetElement?.removeEventListener("volumechange", onVolumeChange);
+			targetElement?.removeEventListener("waiting", onWaiting);
+			targetElement?.removeEventListener("ratechange", onRateChange);
+			targetElement?.removeEventListener("progress", onProgress);
+		};
+	});
+
+	const refTargetElement: Action<TElement> = (node) => {
+		targetElement = node;
+	};
+
+	const play = () => {
+		targetElement?.play();
+	};
+
+	const pause = () => {
+		targetElement?.pause();
+	};
+
+	const changeTime = (seconds: number) => {
+		if (targetElement) {
+			targetElement.currentTime = Math.max(
+				0,
+				Math.min(seconds, get(duration)),
+			);
+		}
+	};
+
+	const mute = () => {
+		targetElement!.muted = true;
+	};
+
+	const unmute = () => {
+		targetElement!.muted = false;
+	};
+
+	const changeVolume = (value: number) => {
+		if (targetElement) {
+			targetElement.volume = Math.max(0, Math.min(value / 100, 1));
+		}
+	};
+
+	const changeSpeed = (value: number) => {
+		targetElement!.playbackRate = value;
+	};
+
+	const changePitch = (value: boolean) => {
+		targetElement!.preservesPitch = value;
+		pitch.set(value);
+	};
+
+	return {
+		refTargetElement,
+
+		metadata,
+		paused,
+		muted,
+		wait,
+		pitch,
+
+		duration,
+		time,
+		progress,
+		volume,
+		speed,
+		buffers,
+
+		play,
+		pause,
+		changeTime,
+		mute,
+		unmute,
+		changeVolume,
+		changeSpeed,
+		changePitch,
+	};
+}
+```
+
+## Usage
+
+```svelte
+<script lang="ts">
+	import { createMediaControl } from "@hooks/SvelteMediaControl.svelte";
+
+	const {
+		refTargetElement,
+		paused,
+
+		play,
+		pause,
+	} = createMediaControl<HTMLVideoElement>();
+</script>
+
+<div>
+	<div>
+		<video
+			use:refTargetElement
+			src="https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v"
+			controls
+		>
+		</video>
+	</div>
+	<div>
+		<button
+			onclick={() => {
+				if ($paused) {
+					play();
+				} else {
+					pause();
+				}
+			}}
+		>
+			{#if $paused}
+				Play
+			{:else}
+				Pause
+			{/if}
+		</button>
+	</div>
+</div>
+```

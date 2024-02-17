@@ -1,0 +1,55 @@
+<script>
+	// Copy Code Block
+
+	const toggleHiddenElements = (elements: NodeListOf<Element>) => {
+		for (const element of elements) {
+			element.classList.toggle("hidden");
+		}
+	};
+
+	const copyCodeButtons: NodeListOf<HTMLButtonElement> =
+		document.querySelectorAll("button.sheera-copy-code");
+
+	for (const copyCodeButton of copyCodeButtons) {
+		copyCodeButton.addEventListener("click", (event) => {
+			const target = event.currentTarget as HTMLButtonElement;
+			target.setAttribute("disabled", "");
+
+			window.navigator.clipboard.writeText(
+				target.parentElement!.parentElement!.querySelector("pre")!
+					.innerText,
+			);
+
+			const icons = target.querySelectorAll("svg");
+			toggleHiddenElements(icons);
+
+			setTimeout(() => {
+				toggleHiddenElements(icons);
+				target.removeAttribute("disabled");
+			}, 2000);
+		});
+	}
+
+	const expandCodeButtons: NodeListOf<HTMLButtonElement> =
+		document.querySelectorAll("button.sheera-expand-code");
+
+	for (const expandCodeButton of expandCodeButtons) {
+		expandCodeButton.addEventListener("click", (event) => {
+			const target = event.currentTarget as HTMLButtonElement;
+			const sticky = target.parentElement!;
+			const isExpanded = sticky.hasAttribute("data-expanded");
+			const pre = sticky!.parentElement!.querySelector("pre")!;
+			const preParent = pre.parentElement!;
+
+			if (isExpanded) {
+				preParent.removeAttribute("style");
+				sticky.removeAttribute("data-expanded");
+				target.innerText = "Show more code";
+			} else {
+				preParent.style.maxHeight = `${pre.offsetHeight}px`;
+				sticky.setAttribute("data-expanded", "");
+				target.innerText = "Show less code";
+			}
+		});
+	}
+</script>

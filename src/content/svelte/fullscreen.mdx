@@ -1,0 +1,97 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "Fullscreen"
+description: "Enter or exit fullscreen on specific element."
+date: 2024-01-18
+---
+
+import { Fullscreen } from "@examples/Fullscreen";
+
+## Example
+
+<Fullscreen client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/Fullscreen.svelte">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { onMount } from "svelte";
+import type { Action } from "svelte/action";
+import { writable } from "svelte/store";
+
+export function createFullscreen<TElement extends HTMLElement>() {
+	let targetElement: TElement | null = null;
+	const fullscreen = writable(false);
+
+	onMount(() => {
+		const fullscreenchanged = () => {
+			const element = targetElement ?? document.body;
+			fullscreen.set(document.fullscreenElement === element);
+		};
+
+		document.addEventListener("fullscreenchange", fullscreenchanged);
+
+		return () => {
+			document.removeEventListener("fullscreenchange", fullscreenchanged);
+		};
+	});
+
+	const refTargetElement: Action<TElement> = (node) => {
+		targetElement = node;
+	};
+
+	const enterFullscreen = async (options?: FullscreenOptions) => {
+		return await (targetElement ?? document.body).requestFullscreen(
+			options,
+		);
+	};
+
+	const exitFullscreen = async () => {
+		return await document.exitFullscreen();
+	};
+
+	return {
+		refTargetElement,
+		fullscreen,
+		enterFullscreen,
+		exitFullscreen,
+	};
+}
+```
+
+## Usage
+
+```svelte
+<script lang="ts">
+	import { createFullscreen } from "@hooks/SvelteFullscreen.svelte";
+
+	const { refTargetElement, fullscreen, enterFullscreen, exitFullscreen } =
+		createFullscreen();
+</script>
+
+<div>
+	<div use:refTargetElement>
+		<button
+			onclick={() => {
+				if ($fullscreen) {
+					exitFullscreen();
+				} else {
+					enterFullscreen();
+				}
+			}}
+		>
+			{#if $fullscreen}
+				Exit Fullscreen
+			{:else}
+				Enter Fullscreen
+			{/if}
+		</button>
+	</div>
+</div>
+```

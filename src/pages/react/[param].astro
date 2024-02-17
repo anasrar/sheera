@@ -1,0 +1,56 @@
+---
+// import { getCollection } from "astro:content";
+import { getEntry } from "astro:content";
+import Layout from "@layouts/Main.astro";
+import Heading2 from "@components/Heading2.svelte";
+import Paragraph from "@components/Paragraph.svelte";
+import Pre from "@components/Pre.svelte";
+import HookFloatFooter from "@components/HookFloatFooter.svelte";
+import ScriptMarkdown from "@components/ScriptMarkdown.astro";
+
+// export const getStaticPaths = async () => {
+// 	const params = (await getCollection("hook")).map((hook) => ({
+// 		params: {
+// 			param: hook.slug,
+// 		},
+// 		props: { hook },
+// 	}));
+//
+// 	return params;
+// };
+//
+// const { hook } = Astro.props;
+
+const { param } = Astro.params;
+
+if (param === undefined) {
+	return Astro.redirect("/404");
+}
+
+const hook = await getEntry("react", param);
+
+if (hook === undefined) {
+	return Astro.redirect("/404");
+}
+
+const { Content } = await hook.render();
+---
+
+<Layout title={`React - ${hook.data.title}`}>
+	<header>
+		<h1 class="font-bold text-2xl text-center">
+			{hook.data.title}
+		</h1>
+	</header>
+	<main class="mt-8">
+		<Content
+			components={{
+				h2: Heading2,
+				p: Paragraph,
+				pre: Pre,
+			}}
+		/>
+	</main>
+	<HookFloatFooter client:load framework={"REACT"} hook={param} />
+	<ScriptMarkdown />
+</Layout>
