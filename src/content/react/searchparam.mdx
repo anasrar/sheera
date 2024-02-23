@@ -1,0 +1,88 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "SearchParam"
+description: "Get and set state from URL parameters."
+date: 2024-02-23
+---
+
+import { SearchParam } from "@examples/SearchParam";
+
+## Example
+
+<SearchParam client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/SearchParam.tsx">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { useEffect, useState } from "react";
+
+export function useSearchParam(key: string, defaultValue: string) {
+	const [value, setValue] = useState(
+		new URL(window.location.toString()).searchParams.get(key) ??
+			defaultValue,
+	);
+
+	const setter = (newValue: string) => {
+		const url = new URL(window.location.toString());
+
+		url.searchParams.set(key, newValue);
+		history.pushState({}, "", url);
+
+		setValue(newValue);
+	};
+
+	useEffect(() => {
+		const popstate = () => {
+			setValue(
+				new URL(window.location.toString()).searchParams.get(key) ??
+					defaultValue,
+			);
+		};
+
+		window.addEventListener("popstate", popstate);
+
+		return () => {
+			window.removeEventListener("popstate", popstate);
+		};
+	}, []);
+
+	return [value, setter] as const;
+}
+```
+
+## Usage
+
+```tsx
+import { useSearchParam } from "@hooks/ReacteSearchParam";
+
+const SIZES = ["SMALL", "MEDIUM", "LARGE"] as const;
+
+export function SearchParam() {
+	const [paramSize, setParamSize] = useSearchParam("size", SIZES[0]);
+
+	return (
+		<div>
+			<select
+				onChange={(event) => {
+					setParamSize(event.currentTarget.value);
+				}}
+				value={paramSize}
+			>
+				{SIZES.map((size) => (
+					<option key={size} value={size}>
+						{size}
+					</option>
+				))}
+			</select>
+			<div>{paramSize}</div>
+		</div>
+	);
+}
+```
