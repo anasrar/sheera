@@ -1,4 +1,4 @@
-import { useSearchParam } from "@hooks/ReacteSearchParam";
+import { useSearchParam } from "@hooks/ReactSearchParam";
 import { useEffect, useState } from "react";
 
 const SIZES = ["SMALL", "MEDIUM", "LARGE"] as const;
