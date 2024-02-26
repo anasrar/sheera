@@ -1,0 +1,94 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "LocalStorage"
+description: "Get and set localStorage with sync all across tab capability."
+date: 2024-02-26
+---
+
+import { LocalStorage } from "@examples/LocalStorage";
+
+## Example
+
+<LocalStorage client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/LocalStorage.tsx">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { useEffect, useState } from "react";
+
+export function useLocalStorage(
+	key: string,
+	defaultValue: string,
+	sync: boolean = false,
+) {
+	const [value, setValue] = useState(
+		window.localStorage.getItem(key) ?? defaultValue,
+	);
+
+	const setter = (newValue: string) => {
+		window.localStorage.setItem(key, newValue);
+		setValue(newValue);
+	};
+
+	useEffect(() => {
+		const storage = (event: StorageEvent) => {
+			if (event.key === key) {
+				setValue(event.newValue ?? defaultValue);
+			}
+		};
+
+		if (sync) {
+			window.addEventListener("storage", storage);
+		}
+
+		return () => {
+			if (sync) {
+				window.removeEventListener("storage", storage);
+			}
+		};
+	}, []);
+
+	return [value, setter] as const;
+}
+```
+
+## Usage
+
+```tsx
+import { useLocalStorage } from "@hooks/ReactLocalStorage";
+
+const MODES = ["LIGHT", "DARK"] as const;
+
+export function SearchParam() {
+	const [storageMode, setStorageMode] = useLocalStorage(
+		"mode",
+		MODES[0],
+		true,
+	);
+
+	return (
+		<div>
+			<select
+				onChange={(event) => {
+					setStorageMode(event.currentTarget.value);
+				}}
+				value={storageMode}
+			>
+				{MODES.map((mode) => (
+					<option key={mode} value={mode}>
+						{mode}
+					</option>
+				))}
+			</select>
+			<div>{storageMode}</div>
+		</div>
+	);
+}
+```

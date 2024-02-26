@@ -1,0 +1,89 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "LocalStorage"
+description: "Get and set localStorage with sync all across tab capability."
+date: 2024-02-26
+---
+
+import { LocalStorage } from "@examples/LocalStorage";
+
+## Example
+
+<LocalStorage client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/LocalStorage.svelte">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { onMount } from "svelte";
+import { writable } from "svelte/store";
+
+export function createLocalStorage(
+	key: string,
+	defaultValue: string,
+	sync: boolean = false,
+) {
+	const value = writable(window.localStorage.getItem(key) ?? defaultValue);
+
+	const setter = (newValue: string) => {
+		window.localStorage.setItem(key, newValue);
+		value.set(newValue);
+	};
+
+	onMount(() => {
+		const storage = (event: StorageEvent) => {
+			if (event.key === key) {
+				value.set(event.newValue ?? defaultValue);
+			}
+		};
+
+		if (sync) {
+			window.addEventListener("storage", storage);
+		}
+
+		return () => {
+			if (sync) {
+				window.removeEventListener("storage", storage);
+			}
+		};
+	});
+
+	return [value, setter] as const;
+}
+```
+
+## Usage
+
+```svelte
+<script lang="ts">
+	import { createSearchParam } from "@hooks/SvelteLocalStorage.svelte";
+
+	const MODES = ["LIGHT", "DARK"] as const;
+
+	const [storageMode, setStorageMode] = createLocalStorage(
+		"mode",
+		MODES[0],
+		true,
+	);
+</script>
+
+<div>
+	<select
+		onchange={(event) => {
+			setStorageMode(event.currentTarget.value);
+		}}
+		value={$storageMode}
+	>
+		{#each MODES as mode (mode)}
+			<option value={mode}>{mode}</option>
+		{/each}
+	</select>
+	<div>{$storageMode}</div>
+</div>
+```
