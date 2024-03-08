@@ -1,0 +1,62 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "MatchMedia"
+description: "CSS @media in JavaScript"
+date: 2024-03-06
+---
+
+import { MatchMedia } from "@examples/MatchMedia";
+
+## Example
+
+<MatchMedia client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/MatchMedia.svelte">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { onMount } from "svelte";
+import { writable } from "svelte/store";
+
+export function createMatchMedia(query: string) {
+	const mql = window.matchMedia(query);
+	const value = writable(mql.matches);
+
+	onMount(() => {
+		const change = (event: MediaQueryListEvent) => {
+			value.set(event.matches);
+		};
+
+		mql.addEventListener("change", change);
+
+		return () => {
+			mql.removeEventListener("change", change);
+		};
+	});
+
+	return value;
+}
+```
+
+## Usage
+
+```svelte
+<script lang="ts">
+	import { createMatchMedia } from "@hooks/SvelteMatchMedia.svelte";
+
+	const greaterThan600Px = createMatchMedia("(min-width: 600px)");
+</script>
+
+<div>
+	<div>screenWidth &gt;= 600px</div>
+	<div>
+		{$greaterThan600Px}
+	</div>
+</div>
+```

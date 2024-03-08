@@ -1,0 +1,63 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "MatchMedia"
+description: "CSS @media in JavaScript"
+date: 2024-03-06
+---
+
+import { MatchMedia } from "@examples/MatchMedia";
+
+## Example
+
+<MatchMedia client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/MatchMedia.tsx">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { useEffect, useState } from "react";
+
+export function useMatchMedia(query: string) {
+	const mql = window.matchMedia(query);
+	const [value, setValue] = useState(mql.matches);
+
+	useEffect(() => {
+		const change = (event: MediaQueryListEvent) => {
+			setValue(event.matches);
+		};
+
+		mql.addEventListener("change", change);
+
+		return () => {
+			mql.removeEventListener("change", change);
+		};
+	}, []);
+
+	return value;
+}
+```
+
+## Usage
+
+```tsx
+import { useMatchMedia } from "@hooks/ReactMatchMedia";
+
+function MatchMedia() {
+	const greaterThan600Px = useMatchMedia("(min-width: 600px)");
+
+	return (
+		<>
+			<div>
+				<div>screenWidth &gt;= 600px</div>
+				<div>{`${greaterThan600Px}`}</div>
+			</div>
+		</>
+	);
+}
+```
