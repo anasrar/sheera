@@ -1,0 +1,94 @@
+---
+# vi:ft=markdown
+# vi:wrap
+title: "ElementDimension"
+description: "Watch element dimension based on writing-mode (inline and block)."
+date: 2024-03-13
+---
+
+import { ElementDimension } from "@examples/ElementDimension";
+
+## Example
+
+<ElementDimension client:load />
+
+<div class="mb-4 text-blue-400 text-center text-sm underline">
+	<a href="https://github.com/anasrar/sheera/blob/main/src/examples/ElementDimension.svelte">
+		Example Source Code
+	</a>
+</div>
+
+## Code
+
+```typescript
+import { onMount } from "svelte";
+import type { Action } from "svelte/action";
+import { writable } from "svelte/store";
+
+export function createElementDimension<TElement extends HTMLElement>() {
+	let targetElement: TElement | null = null;
+	const dimension = writable<{ inline: number; block: number }>({
+		inline: 0,
+		block: 0,
+	});
+
+	const refTargetElement: Action<TElement> = (node) => {
+		targetElement = node;
+	};
+
+	onMount(() => {
+		if (!targetElement) return;
+
+		const observer = new window.ResizeObserver((entries) => {
+			for (const entry of entries) {
+				if (entry.contentBoxSize) {
+					const size = entry.borderBoxSize.at(0);
+					if (size) {
+						const { inlineSize, blockSize } = size;
+						dimension.set({
+							inline: inlineSize,
+							block: blockSize,
+						});
+					}
+				} else {
+					const { width, height } = entry.contentRect;
+					dimension.set({ inline: width, block: height });
+				}
+			}
+		});
+
+		observer.observe(targetElement);
+
+		return () => {
+			observer.disconnect();
+		};
+	});
+
+	return {
+		refTargetElement,
+		dimension,
+	};
+}
+```
+
+## Usage
+
+```svelte
+<script lang="ts">
+	import { createElementDimension } from "@hooks/SvelteElementDimension.svelte";
+
+	const { refTargetElement, dimension } = createElementDimension();
+</script>
+
+<div>
+	<div>
+		<div>
+			inline: {$dimension.inline}px
+		</div>
+		<div>
+			block: {$dimension.block}px
+		</div>
+	</div>
+	<div use:refTargetElement>content</div>
+</div>
+```
