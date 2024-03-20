@@ -36,7 +36,7 @@ export function useElementDimension<TElement extends HTMLElement>() {
 		return () => {
 			observer.disconnect();
 		};
-	});
+	}, []);
 
 	return {
 		refTargetElement,
